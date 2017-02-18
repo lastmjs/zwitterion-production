@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "description": "TypeScript development and production static file server, built with NGINX and Node.js.",
   "scripts": {
-    "start": "sudo nginx -p . -c nginx.conf -g 'error_log stderr;' && echo \"NGINX running on port 5000\"",
-    "stop": "sudo nginx -p . -s stop"
+    "start": "node main.js"
   },
   "bin": {
     "zwitterion-production": "./main.js"
@@ -20,6 +19,7 @@
   },
   "homepage": "https://github.com/lastmjs/zwitterion-production#readme",
   "dependencies": {
-    "commander": "^2.9.0"
+    "commander": "^2.9.0",
+    "node-cleanup": "^2.1.2"
   }
 }
