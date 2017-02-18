@@ -14,10 +14,12 @@ program
     .option('-p, --port [port]', 'Specify the server\'s port')
     .option('-l, --logs', 'Turn on logging to files in current directory')
     .option('-r, --spa-root [spaRoot]', 'The file to redirect to when a requested file is not found')
+    .option('-w, --watch-files', 'Watch files in current directory and reload browser on changes')
     .parse(process.argv);
 // end side-causes
 
 // start pure operations, generate the data
+const watchFiles = program.watchFiles;
 const spaRoot = program.spaRoot || 'index.html';
 const logs = program.logs;
 const accessLogFile = logs ? 'http.access.log' : '/dev/null';
@@ -25,10 +27,10 @@ const errorLogFile = logs ? 'http.error.log' : '/dev/null';
 const nginxPort = +(program.port || 5000);
 const typeScriptPort = nginxPort + 1;
 const nginxConf = createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot);
-const typeScriptBuilder = createTypeScriptBuilder(Builder);
-const typeScriptHttpServer = createTypeScriptServer(http, typeScriptPort, typeScriptBuilder);
+let typeScriptBuilder = createTypeScriptBuilder(Builder);
+const typeScriptHttpServer = createTypeScriptServer(http, typeScriptPort, typeScriptBuilder, watchFiles);
 const io = require('socket.io')(typeScriptHttpServer);
-const watcher = configureFileWatcher(io);
+if (watchFiles) configureFileWatcher(io, typeScriptBuilder);
 //end pure operations
 
 // start side-effects, change the world
@@ -55,6 +57,10 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
 
                 root .;
 
+                location /zwitterion-config.js {
+                    proxy_pass http://localhost:${typeScriptPort};
+                }
+
                 # send all .ts files to the Node.js server for transpilation
                 location ~ \..ts$ {
                     proxy_pass http://localhost:${typeScriptPort};
@@ -70,8 +76,9 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
     `;
 }
 
-function configureFileWatcher(io) {
+function configureFileWatcher(io, typeScriptBuilder) {
     return chokidar.watch('.').on('change', (path) => {
+        // typeScriptBuilder.invalidate(path); //TODO not sure if we need this yet
         reloadBrowser(io);
     });
 }
@@ -80,18 +87,45 @@ function reloadBrowser(io) {
     io.emit('reload');
 }
 
-function createTypeScriptServer(http, typeScriptPort, builder) {
+function createTypeScriptServer(http, typeScriptPort, builder, watchFiles) {
     return http.createServer((req, res) => {
         const path = req.url.slice(1);
+
+        if (path === 'zwitterion-config.js') {
+            const systemJS = fs.readFileSync('node_modules/systemjs/dist/system.js', 'utf8'); //TODO we might not want to leave this as sync, but I don't think it matters for development, and this will only be used for development
+            const socketIO = watchFiles ? fs.readFileSync('node_modules/socket.io-client/dist/socket.io.min.js', 'utf8') : '';
+            const tsImportsConfig = `
+                System.config({
+                    packages: {
+                        '': {
+                            defaultExtension: 'ts'
+                        }
+                    }
+                });
+            `;
+            const socketIOConfig = watchFiles ? `
+                window.ZWITTERION_SOCKET = window.ZWITTERION_SOCKET || io('http://localhost:${typeScriptPort}');
+                window.ZWITTERION_SOCKET.removeAllListeners('reload');
+                window.ZWITTERION_SOCKET.on('reload', function() {
+                    window.location.reload();
+                });
+            ` : '';
+
+            res.end(`${systemJS}${socketIO}${tsImportsConfig}${socketIOConfig}`);
+            return;
+        }
+
         const isRootImport = !isSystemImportRequest(req);
 
         builder.compile(path, null, {
             minify: false
-        }).then((output) => {
+        })
+        .then((output) => {
             const source = prepareSource(isRootImport, path, output.source);
             res.end(source);
-        }, (error) => {
-            console.log(error);
+        })
+        .catch((error) => {
+            res.end(error.toString());
         });
     });
 }

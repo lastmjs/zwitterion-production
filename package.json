@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "TypeScript development and production static file server, built with NGINX and Node.js.",
   "scripts": {
-    "start": "node main.js"
+    "start": "node main.js --watch-files"
   },
   "bin": {
     "zwitterion-production": "./main.js"

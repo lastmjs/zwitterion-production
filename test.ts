@@ -1,5 +1,3 @@
-const number: stri = 5;
+const number: string = 5;
 
-console.log(number);
-
-alert(number);
+alert('it works 4 well what is your name');
