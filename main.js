@@ -7,6 +7,7 @@ const http = require('http');
 const execSync = require('child_process').execSync;
 const nodeCleanup = require('node-cleanup');
 const Builder = require('systemjs-builder');
+const chokidar = require('chokidar');
 
 program
     .version('0.0.0')
@@ -22,10 +23,12 @@ const logs = program.logs;
 const accessLogFile = logs ? 'http.access.log' : '/dev/null';
 const errorLogFile = logs ? 'http.error.log' : '/dev/null';
 const nginxPort = +(program.port || 5000);
-const nodePort = nginxPort + 1;
-const nginxConf = createNGINXConfigFile(fs, nginxPort, nodePort, spaRoot);
+const typeScriptPort = nginxPort + 1;
+const nginxConf = createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot);
 const typeScriptBuilder = createTypeScriptBuilder(Builder);
-const httpServer = createNodeServer(http, nodePort, typeScriptBuilder);
+const typeScriptHttpServer = createTypeScriptServer(http, typeScriptPort, typeScriptBuilder);
+const io = require('socket.io')(typeScriptHttpServer);
+const watcher = configureFileWatcher(io);
 //end pure operations
 
 // start side-effects, change the world
@@ -35,10 +38,10 @@ console.log(`NGINX listening on port ${nginxPort}`);
 nodeCleanup((exitCode, signal) => {
     execSync(`sudo nginx -p . -s stop`);
 });
-httpServer.listen(nodePort);
+typeScriptHttpServer.listen(typeScriptPort);
 // end side-effects
 
-function createNGINXConfigFile(fs, nginxPort, nodePort, spaRoot) {
+function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
     return `
         events {}
 
@@ -52,22 +55,32 @@ function createNGINXConfigFile(fs, nginxPort, nodePort, spaRoot) {
 
                 root .;
 
+                # send all .ts files to the Node.js server for transpilation
+                location ~ \..ts$ {
+                    proxy_pass http://localhost:${typeScriptPort};
+                }
+
                 # send all requests to files that don't exist back to the root file
                 location / {
                     try_files $uri /${spaRoot};
                     # try_files $uri $uri/ /${spaRoot}; # If the above ends up not working, this line also seemed popular
-                }
-
-                # send all .ts files to the Node.js server for transpilation
-                location ~ \..ts$ {
-                    proxy_pass http://localhost:${nodePort};
                 }
             }
         }
     `;
 }
 
-function createNodeServer(http, nodePort, builder) {
+function configureFileWatcher(io) {
+    return chokidar.watch('.').on('change', (path) => {
+        reloadBrowser(io);
+    });
+}
+
+function reloadBrowser(io) {
+    io.emit('reload');
+}
+
+function createTypeScriptServer(http, typeScriptPort, builder) {
     return http.createServer((req, res) => {
         const path = req.url.slice(1);
         const isRootImport = !isSystemImportRequest(req);

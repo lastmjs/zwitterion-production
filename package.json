@@ -19,9 +19,11 @@
   },
   "homepage": "https://github.com/lastmjs/zwitterion-production#readme",
   "dependencies": {
+    "chokidar": "^1.6.1",
     "commander": "^2.9.0",
     "node-cleanup": "^2.1.2",
     "plugin-typescript": "^6.0.4",
+    "socket.io": "^1.7.3",
     "systemjs-builder": "^0.16.3"
   }
 }
