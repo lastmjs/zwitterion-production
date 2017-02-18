@@ -21,7 +21,7 @@ program
 // start pure operations, generate the data
 const watchFiles = program.watchFiles;
 const spaRoot = program.spaRoot || 'index.html';
-const logs = program.logs;
+const logs = watchFiles ? true : program.logs;
 const accessLogFile = logs ? 'http.access.log' : '/dev/null';
 const errorLogFile = logs ? 'http.error.log' : '/dev/null';
 const nginxPort = +(program.port || 5000);
@@ -30,7 +30,8 @@ const nginxConf = createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot);
 let typeScriptBuilder = createTypeScriptBuilder(Builder);
 const typeScriptHttpServer = createTypeScriptServer(http, typeScriptPort, typeScriptBuilder, watchFiles);
 const io = require('socket.io')(typeScriptHttpServer);
-if (watchFiles) configureFileWatcher(io, typeScriptBuilder);
+let watcher;
+if (watchFiles) watcher = configureFileWatcher(io, typeScriptBuilder, accessLogFile);
 //end pure operations
 
 // start side-effects, change the world
@@ -48,11 +49,12 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
         events {}
 
         http {
+            log_format path '$request_filename';
 
             server {
                 listen ${nginxPort};
 
-                access_log ${accessLogFile};
+                access_log ${accessLogFile} path;
                 error_log ${errorLogFile};
 
                 root .;
@@ -76,10 +78,18 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
     `;
 }
 
-function configureFileWatcher(io, typeScriptBuilder) {
-    return chokidar.watch('.').on('change', (path) => {
-        // typeScriptBuilder.invalidate(path); //TODO not sure if we need this yet
-        reloadBrowser(io);
+function configureFileWatcher(io, typeScriptBuilder, accessLogFile) {
+    return chokidar.watch(accessLogFile).on('change', (path) => {
+        if (path === accessLogFile) {
+            const accessLog = fs.readFileSync(path).toString();
+            const lastLine = accessLog.trim().split('\n').slice(-1)[0];
+            const filePath = lastLine.replace('././', '');
+            watcher.add(filePath);
+        }
+        else {
+            // typeScriptBuilder.invalidate(path); //TODO not sure if we need this yet
+            reloadBrowser(io);
+        }
     });
 }
 
