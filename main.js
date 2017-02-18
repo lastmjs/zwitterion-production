@@ -12,16 +12,18 @@ program
     .version('0.0.0')
     .option('-p, --port [port]', 'Specify the server\'s port')
     .option('-l, --logs', 'Turn on logging to files in current directory')
+    .option('-r, --spa-root [spaRoot]', 'The file to redirect to when a requested file is not found')
     .parse(process.argv);
 // end side-causes
 
 // start pure operations, generate the data
+const spaRoot = program.spaRoot || 'index.html';
 const logs = program.logs;
 const accessLogFile = logs ? 'http.access.log' : '/dev/null';
 const errorLogFile = logs ? 'http.error.log' : '/dev/null';
 const nginxPort = +(program.port || 5000);
 const nodePort = nginxPort + 1;
-const nginxConf = createNGINXConfigFile(fs, nginxPort, nodePort);
+const nginxConf = createNGINXConfigFile(fs, nginxPort, nodePort, spaRoot);
 const typeScriptBuilder = createTypeScriptBuilder(Builder);
 const httpServer = createNodeServer(http, nodePort, typeScriptBuilder);
 //end pure operations
@@ -36,7 +38,7 @@ nodeCleanup((exitCode, signal) => {
 httpServer.listen(nodePort);
 // end side-effects
 
-function createNGINXConfigFile(fs, nginxPort, nodePort) {
+function createNGINXConfigFile(fs, nginxPort, nodePort, spaRoot) {
     return `
         events {}
 
@@ -50,6 +52,13 @@ function createNGINXConfigFile(fs, nginxPort, nodePort) {
 
                 root .;
 
+                # send all requests to files that don't exist back to the root file
+                location / {
+                    try_files $uri /${spaRoot};
+                    # try_files $uri $uri/ /${spaRoot}; # If the above ends up not working, this line also seemed popular
+                }
+
+                # send all .ts files to the Node.js server for transpilation
                 location ~ \..ts$ {
                     proxy_pass http://localhost:${nodePort};
                 }
