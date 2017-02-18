@@ -10,7 +10,7 @@ const Builder = require('systemjs-builder');
 const chokidar = require('chokidar');
 
 program
-    .version('0.0.2')
+    .version('0.0.3')
     .option('-p, --port [port]', 'Specify the server\'s port')
     .option('-l, --logs', 'Turn on logging to files in current directory')
     .option('-r, --spa-root [spaRoot]', 'The file to redirect to when a requested file is not found')
