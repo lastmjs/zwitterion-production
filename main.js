@@ -11,10 +11,14 @@ const Builder = require('systemjs-builder');
 program
     .version('0.0.0')
     .option('-p, --port [port]', 'Specify the server\'s port')
+    .option('-l, --logs', 'Turn on logging to files in current directory')
     .parse(process.argv);
 // end side-causes
 
 // start pure operations, generate the data
+const logs = program.logs;
+const accessLogFile = logs ? 'http.access.log' : '/dev/null';
+const errorLogFile = logs ? 'http.error.log' : '/dev/null';
 const nginxPort = +(program.port || 5000);
 const nodePort = nginxPort + 1;
 const nginxConf = createNGINXConfigFile(fs, nginxPort, nodePort);
@@ -41,8 +45,8 @@ function createNGINXConfigFile(fs, nginxPort, nodePort) {
             server {
                 listen ${nginxPort};
 
-                access_log http.access.log;
-                error_log http.error.log;
+                access_log ${accessLogFile};
+                error_log ${errorLogFile};
 
                 root .;
 
