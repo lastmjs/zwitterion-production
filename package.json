@@ -20,6 +20,8 @@
   "homepage": "https://github.com/lastmjs/zwitterion-production#readme",
   "dependencies": {
     "commander": "^2.9.0",
-    "node-cleanup": "^2.1.2"
+    "node-cleanup": "^2.1.2",
+    "plugin-typescript": "^6.0.4",
+    "systemjs-builder": "^0.16.3"
   }
 }
