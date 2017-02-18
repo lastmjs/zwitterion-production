@@ -57,11 +57,12 @@ function createNGINXConfigFile(fs, nginxPort, nodePort) {
 function createNodeServer(http, nodePort, builder) {
     return http.createServer((req, res) => {
         const path = req.url.slice(1);
+        const isRootImport = !isSystemImportRequest(req);
 
         builder.compile(path, null, {
             minify: false
         }).then((output) => {
-            const source = prepareSource(path, output.source);
+            const source = prepareSource(isRootImport, path, output.source);
             res.end(source);
         }, (error) => {
             console.log(error);
@@ -109,12 +110,21 @@ function createTypeScriptBuilder(Builder) {
     return builder;
 }
 
-function prepareSource(path, rawSource) {
-    const escapedSource = rawSource.replace(/\\/g, '\\\\');
-    const preparedSource = `
-        System.define(System.normalizeSync('${path}'), \`
-            ${escapedSource}
-        \`);
-    `;
-    return preparedSource;
+function isSystemImportRequest(req) {
+    return req.headers.accept && req.headers.accept.includes('application/x-es-module');
+}
+
+function prepareSource(isRootImport, path, rawSource) {
+    if (isRootImport) {
+        const escapedSource = rawSource.replace(/\\/g, '\\\\');
+        const preparedSource = `
+            System.define(System.normalizeSync('${path}'), \`
+                ${escapedSource}
+            \`);
+        `;
+        return preparedSource;
+    }
+    else {
+        return rawSource;
+    }
 }
