@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // start side-causes, read from the world
 const fs = require('fs');
 const program = require('commander');
