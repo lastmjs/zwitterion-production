@@ -34,9 +34,19 @@ sudo apt-get install nginx
 
 NGINX https config:
 ```
+# redirect all http GET traffic to https
+server {
+    listen 80;
+    server_name solutiamaxima.com www.solutiamaxima.com;
+    return 301 https://solutiamaxima.com$request_uri;
+}
+
 server {
   listen 443 ssl;
-  server_name solutiamaxima.com www.solutiamaxima.com
+  server_name solutiamaxima.com www.solutiamaxima.com;
+  root /home/ubuntu/test-nginx;
+  ssl_certificate /etc/letsencrypt/live/solutiamaxima.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/solutiamaxima.com/privkey.pem;
 }
 ```
 
