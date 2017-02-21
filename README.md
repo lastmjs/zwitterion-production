@@ -22,6 +22,14 @@ Make sure the machine that you deploy to has NGINX installed.
 
 If you are using Dokku, do the following:
 
+```
+//The following is for HTTPS
+//find your public key and private key, and transform them into the format that dokku needs
+cat [public-key].pem > server.crt
+cat [private-key].pem > server.key
+dokku certs:add [app-name] server.crt server.key
+```
+
 #### Custom
 
 ```
