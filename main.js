@@ -51,7 +51,7 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
             server {
                 listen ${nginxPort};
 
-                access_log logs/access.log;
+                access_log logs/access.log path;
                 error_log logs/error.log;
 
                 root ../..;
