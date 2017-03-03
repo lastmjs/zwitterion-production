@@ -80,7 +80,7 @@ function configureFileWatcher(io, typeScriptBuilder, accessLogFile) {
         if (path === accessLogFile) {
             const accessLog = fs.readFileSync(path).toString();
             const lastLine = accessLog.trim().split('\n').slice(-1)[0];
-            const filePath = lastLine.replace('././', '');
+            const filePath = lastLine.replace('node_modules/nx-local-server/../../', '');
             watcher.add(filePath);
         }
         else {
