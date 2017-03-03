@@ -33,10 +33,10 @@ if (watchFiles) watcher = configureFileWatcher(io, typeScriptBuilder, accessLogF
 
 // start side-effects, change the world
 fs.writeFileSync('nginx.conf', nginxConf);
-execSync(`node_modules/.bin/nginx -p . -c nginx.conf && exit 0`);
+execSync(`node_modules/.bin/nginx -p node_modules/nx-local-server -c ../../nginx.conf && exit 0`);
 console.log(`NGINX listening on port ${nginxPort}`);
 nodeCleanup((exitCode, signal) => {
-    execSync(`node_modules/.bin/nginx -p . -s stop`);
+    execSync(`node_modules/.bin/nginx -p node_modules/nx-local-server -s stop`);
 });
 typeScriptHttpServer.listen(typeScriptPort);
 // end side-effects
@@ -51,8 +51,8 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
             server {
                 listen ${nginxPort};
 
-                access_log node_modules/nx-local-server/logs/access.log;
-                error_log node_modules/nx-local-server/logs/error.log;
+                access_log logs/access.log;
+                error_log logs/error.log;
 
                 root ../..;
 
