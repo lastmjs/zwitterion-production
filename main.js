@@ -28,7 +28,7 @@ let typeScriptBuilder = createTypeScriptBuilder(Builder);
 const typeScriptHttpServer = createTypeScriptServer(http, typeScriptPort, typeScriptBuilder, watchFiles);
 const io = require('socket.io')(typeScriptHttpServer);
 let watcher;
-if (watchFiles) watcher = configureFileWatcher(io, typeScriptBuilder, accessLogFile);
+if (watchFiles) watcher = configureFileWatcher(io, typeScriptBuilder, 'node_modules/nx-local-server/logs/access.log');
 //end pure operations
 
 // start side-effects, change the world
