@@ -1,7 +1,7 @@
 {
   "name": "zwitterion-production",
-  "version": "0.0.3",
-  "description": "TypeScript development and production static file server, built with NGINX and Node.js.",
+  "version": "0.0.4",
+  "description": "Development and production static file server for TypeScript, built with NGINX and Node.js.",
   "scripts": {
     "start": "node main.js"
   },
