@@ -12,7 +12,6 @@ const chokidar = require('chokidar');
 program
     .version('0.0.3')
     .option('-p, --port [port]', 'Specify the server\'s port')
-    .option('-l, --logs', 'Turn on logging to files in current directory')
     .option('-r, --spa-root [spaRoot]', 'The file to redirect to when a requested file is not found')
     .option('-w, --watch-files', 'Watch files in current directory and reload browser on changes')
     .parse(process.argv);
@@ -22,8 +21,6 @@ program
 const watchFiles = program.watchFiles;
 const spaRoot = program.spaRoot || 'index.html';
 const logs = watchFiles ? true : program.logs;
-const accessLogFile = logs ? 'http.access.log' : '/dev/null';
-const errorLogFile = logs ? 'http.error.log' : '/dev/null';
 const nginxPort = +(program.port || 5000);
 const typeScriptPort = nginxPort + 1;
 const nginxConf = createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot);
@@ -36,10 +33,10 @@ if (watchFiles) watcher = configureFileWatcher(io, typeScriptBuilder, accessLogF
 
 // start side-effects, change the world
 fs.writeFileSync('nginx.conf', nginxConf);
-execSync(`sudo nginx -p . -c nginx.conf && exit 0`);
+execSync(`nginx -p . -c nginx.conf && exit 0`);
 console.log(`NGINX listening on port ${nginxPort}`);
 nodeCleanup((exitCode, signal) => {
-    execSync(`sudo nginx -p . -s stop`);
+    execSync(`nginx -p . -s stop`);
 });
 typeScriptHttpServer.listen(typeScriptPort);
 // end side-effects
@@ -54,10 +51,10 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
             server {
                 listen ${nginxPort};
 
-                access_log ${accessLogFile} path;
-                error_log ${errorLogFile};
+                access_log logs/access.log;
+                error_log logs/error.log;
 
-                root .;
+                root ../..;
 
                 location /zwitterion-config.js {
                     proxy_pass http://localhost:${typeScriptPort};
