@@ -46,6 +46,7 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
         events {}
 
         http {
+            include conf/mime.types;
             log_format path '$request_filename';
 
             server {
