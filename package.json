@@ -1,6 +1,6 @@
 {
   "name": "zwitterion-production",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Development and production static file server for TypeScript, built with NGINX and Node.js.",
   "scripts": {
     "start": "node main.js"
@@ -19,12 +19,13 @@
   },
   "homepage": "https://github.com/lastmjs/zwitterion-production#readme",
   "dependencies": {
-    "chokidar": "^1.6.1",
+    "chokidar": "^1.7.0",
     "commander": "^2.9.0",
     "node-cleanup": "^2.1.2",
     "nx-local-server": "0.0.2",
-    "plugin-typescript": "^6.0.4",
-    "socket.io": "^1.7.3",
-    "systemjs-builder": "^0.16.3"
+    "plugin-typescript": "^7.0.6",
+    "socket.io": "^1.7.4",
+    "systemjs-builder": "^0.16.4",
+    "typescript": "^2.3.2"
   }
 }
