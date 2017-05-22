@@ -145,7 +145,7 @@ function createTypeScriptBuilder(Builder) {
     builder.config({
         transpiler: 'ts',
         typescriptOptions: {
-            target: 'es6',
+            target: 'es2015',
             module: 'system'
         },
         meta: {
