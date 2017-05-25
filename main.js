@@ -123,7 +123,7 @@ function createTypeScriptServer(http, typeScriptPort, builder, watchFiles) {
             return;
         }
 
-        const isRootImport = !isSystemImportRequest(req);
+        const isRootImport = !isRawSourceRequest(req) && !isSystemImportRequest(req);
 
         builder.compile(path, null, {
             minify: false
@@ -182,13 +182,35 @@ function isSystemImportRequest(req) {
     return req.headers.accept && req.headers.accept.includes('application/x-es-module');
 }
 
+function isRawSourceRequest(req) {
+    return req.headers.accept.includes('application/zwitterion-raw-source');
+}
+
 function prepareSource(isRootImport, path, rawSource) {
     if (isRootImport) {
-        const escapedSource = rawSource.replace(/\\/g, '\\\\');
         const preparedSource = `
-            System.define(System.normalizeSync('${path}'), \`
-                ${escapedSource}
-            \`);
+            window.fetch('${path}', {
+                headers: {
+                    'Accept': 'application/zwitterion-raw-source'
+                }
+            })
+            .then((response) => {
+                return response.text();
+            })
+            .then((text) => {
+                System.define(System.normalizeSync('${path}'), text);
+            });
+
+            //TODO use async await when the time comes
+            // (async () => {
+            //     const request = await window.fetch('${path}', {
+            //         headers: {
+            //             'Accept': 'application/zwitterion-raw-source'
+            //         }
+            //     });
+            //     const text = await request.text();
+            //     System.define(System.normalizeSync('${path}'), text);
+            // })();
         `;
         return preparedSource;
     }
