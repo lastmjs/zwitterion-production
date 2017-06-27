@@ -64,6 +64,7 @@ function createNGINXConfigFile(fs, nginxPort, typeScriptPort, spaRoot) {
                 # send all .ts files to the Node.js server for transpilation
                 location ~ \..ts$ {
                     proxy_pass http://localhost:${typeScriptPort};
+                    add_header Content-type "application/javascript";
                 }
 
                 # send all requests to files that don't exist back to the root file
