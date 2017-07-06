@@ -22,7 +22,7 @@
     "chokidar": "^1.7.0",
     "commander": "^2.9.0",
     "node-cleanup": "^2.1.2",
-    "nx-local-server": "0.0.2",
+    "nx-local-server": "^0.1.0",
     "plugin-typescript": "^7.0.6",
     "socket.io": "^1.7.4",
     "systemjs-builder": "^0.16.4",
