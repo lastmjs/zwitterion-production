@@ -1,3 +1,5 @@
+# DEPRECATED IN FAVOR OF https://github.com/lastmjs/zwitterion
+
 # zwitterion-production
 
 ## Installation
